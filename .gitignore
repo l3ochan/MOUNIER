@@ -2,3 +2,5 @@
 .sync_bf06524c19c2.db
 .sync_bf06524c19c2.db-wal
 Desktop.ini
+.gitignore
+Hyperplanning 1971/.env
