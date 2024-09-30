@@ -5,3 +5,5 @@ Desktop.ini
 .gitignore
 Hyperplanning 1971/.env
 sujet-2024.pdf
+Hyperplanning 1971/Client/.env
+Hyperplanning 1971/Server/.env
