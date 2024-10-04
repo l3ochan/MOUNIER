@@ -94,6 +94,15 @@ def get_student_details(etudiant_nom, etudiant_prenom):
     response = send_request(request)
     return response
 
+def list_students_in_promotion(promo_nom):
+    request = {
+        "action": "list_students_in_promotion",
+        "data": {
+            "promo_nom": promo_nom
+        }
+    }
+    response = send_request(request)
+    return response
 
 
 
@@ -107,6 +116,7 @@ commands = {
     "calculate prom average": (calculate_promotion_average, True),
     "help" : (help, True),
     "details student" : (get_student_details, True), #cette fonction n'en accepte pas
+    "list students in" : (list_students_in_promotion, True),
     }
 
 def process_command(input_command):
