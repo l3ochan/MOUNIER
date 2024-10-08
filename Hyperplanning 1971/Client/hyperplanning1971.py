@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os, socket, json 
+from helpsection import *
 
 
 load_dotenv('.env')
@@ -13,7 +14,7 @@ def send_request(request):
         client_socket.sendall(json.dumps(request).encode('utf-8'))
         response_data = client_socket.recv(4096).decode('utf-8')
         response = json.loads(response_data)
-        print(response)
+        print(f"[{response['status']}]: {response['message']}")
         client_socket.close()
     except Exception as e:
         print(f"Une erreur est survenue lors de l'envoi de la requête : {e}")
@@ -25,6 +26,14 @@ def create_promotion(nom):
         "data": {
             "nom": nom
         }
+    }
+    response = send_request(request)
+    print(response['message'])
+    return()
+
+def handshake():
+    request = {
+        "action": "handshake",
     }
     response = send_request(request)
     return response
@@ -106,17 +115,30 @@ def list_students_in_promotion(promo_nom):
 
 
 
+
+
+
+
+
 # =====friendly commands===== 
 # Définir les commandes et indiquer si elles acceptent des paramètres (True) ou non (False)
 commands = {
-    "create student": (add_student, True),
-    "create prom": (create_promotion, True),
-    "grade add": (add_note, True),
-    "calculate student average": (calculate_student_average, True),  # Cette fonction accepte des paramètres
-    "calculate prom average": (calculate_promotion_average, True),
-    "help" : (help, True),
-    "details student" : (get_student_details, True), #cette fonction n'en accepte pas
-    "list students in" : (list_students_in_promotion, True),
+    "student create": (add_student, True),
+    "prom create": (create_promotion, True),
+    "grade insert": (add_note, True),
+    "student average": (calculate_student_average, True),  # Cette fonction accepte des paramètres
+    "prom average": (calculate_promotion_average, True),
+    "help" : (help_command, False),
+    "student details" : (get_student_details, True), 
+    "student list" : (list_students_in_promotion, True),
+    "student -c": (add_student, True),
+    "prom -c": (create_promotion, True),
+    "grade -i": (add_note, True),
+    "student -av": (calculate_student_average, True),  # Cette fonction accepte des paramètres
+    "prom -av": (calculate_promotion_average, True),
+    "student -d" : (get_student_details, True),
+    "student -l" : (list_students_in_promotion, True),
+    "handshake" : (handshake, False)
     }
 
 def process_command(input_command):
@@ -155,7 +177,8 @@ def process_command(input_command):
 
 # Boucle principale pour lire les commandes de l'utilisateur
 while True:
-    user_input = input(">")
+    user_input = input("Hyperplanning 1971: ")
     if user_input == "exit":
+        print("Bye")
         break
     process_command(user_input)

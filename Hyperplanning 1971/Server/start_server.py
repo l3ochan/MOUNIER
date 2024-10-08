@@ -19,29 +19,26 @@ db_name = os.getenv('DATABASE_NAME', 'mydatabase')
 log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
 log_location = os.getenv('LOG_LOCATION')
 
-# Configuration du logging
+# ==========Configuration du logging================================================
 numeric_level = getattr(logging, log_level, None)
 if not isinstance(numeric_level, int):
     raise ValueError(f"Niveau de log invalide : {log_level}")
 
-# Création du logger
 logger = logging.getLogger(__name__)
 logger.setLevel(numeric_level)
 
-# Création du format des logs
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-# Création du handler pour le fichier
 file_handler = logging.FileHandler(log_location, mode='a', encoding='utf-8')
 file_handler.setLevel(numeric_level)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-# Optionnel : Handler pour la console
 console_handler = logging.StreamHandler()
 console_handler.setLevel(numeric_level)
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
+# ===================================================================================
 
 def get_db_connection():
     """Établit une connexion à la base de données."""
@@ -53,15 +50,15 @@ def get_db_connection():
         database=db_name
     )
 
-# Création de la socket serveur
+# Création du serveur socket 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((listening_ip, listening_port))
 server_socket.listen()
 
 logger.info(f"Serveur démarré et écoute sur {listening_ip}:{listening_port}")
 
+# Gère la connexion avec un client.
 def handle_client(client_socket, address):
-    """Gère la connexion avec un client."""
     print(f"Connexion établie avec {address}")
     logger.info(f"Connexion établie avec {address}")
     try:
@@ -72,8 +69,8 @@ def handle_client(client_socket, address):
         client_socket.close()
         logger.info(f"Fermeture de la connexion avec {address}")
 
+# Gère les requêtes envoyées par le client.
 def handle_requests(client_socket, address):
-    """Gère les requêtes envoyées par le client."""
     try:
         # Recevoir les données du client
         data = client_socket.recv(4096).decode('utf-8')
@@ -98,7 +95,7 @@ def handle_requests(client_socket, address):
             promo_id = cursor.lastrowid
             cursor.close()
             response['status'] = 'success'
-            response['message'] = 'Promotion créée avec succès.'
+            response['message'] = f'Promotion {promo_data['nom']} créée avec succès.'
             response['promo_id'] = promo_id
             logger.info(f"Le client {address} a créé une promotion : {promo_data['nom']} (ID: {promo_id})")
 
@@ -124,13 +121,13 @@ def handle_requests(client_socket, address):
                 etudiant_id = cursor.lastrowid
                 cursor.close()
                 response['status'] = 'success'
-                response['message'] = 'Étudiant ajouté avec succès.'
+                response['message'] = f'Étudiant {nom} {prenom} ajouté avec succès à la promotio {promo_nom}.'
                 response['etudiant_id'] = etudiant_id
                 logger.info(f"Le client {address} a ajouté un étudiant : {prenom} {nom} à la promotion {promo_nom} (ID Promotion: {promo_id}, ID Étudiant: {etudiant_id})")
             else:
                 cursor.close()
                 response['status'] = 'error'
-                response['message'] = "Promotion introuvable."
+                response['message'] = f"Promotion {promo_nom} introuvable."
                 logger.error(f"Le client {address} a tenté d'ajouter un étudiant à une promotion introuvable : {promo_nom}")
 
         elif action == 'add_note':
@@ -155,12 +152,12 @@ def handle_requests(client_socket, address):
                 connection.commit()
                 cursor.close()
                 response['status'] = 'success'
-                response['message'] = 'Note ajoutée avec succès.'
+                response['message'] = f'La note de {valeur} coef {coef} ajoutée avec succès à {etudiant_nom} {etudiant_prenom}.'
                 logger.info(f"Le client {address} a ajouté une note pour {etudiant_prenom} {etudiant_nom} : valeur={valeur}, coef={coef}")
             elif len(results) == 0:
                 cursor.close()
                 response['status'] = 'error'
-                response['message'] = "Étudiant introuvable."
+                response['message'] = f"Étudiant {etudiant_nom} {etudiant_prenom} introuvable."
                 logger.error(f"Le client {address} a tenté d'ajouter une note à un étudiant introuvable : {etudiant_prenom} {etudiant_nom}")
             else:
                 cursor.close()
@@ -192,11 +189,11 @@ def handle_requests(client_socket, address):
                     total_coef = sum(note[1] for note in notes)
                     moyenne = total / total_coef if total_coef != 0 else 0
                     response['status'] = 'success'
-                    response['average'] = moyenne
+                    response['message'] = f' La moyenne pour {etudiant_nom} {etudiant_prenom} est de {float(moyenne)}'
                     logger.info(f"Le client {address} a calculé la moyenne de {etudiant_prenom} {etudiant_nom} : moyenne={moyenne:.2f}")
                 else:
                     response['status'] = 'error'
-                    response['message'] = "Aucune note trouvée pour l'étudiant."
+                    response['message'] = f"Aucune note trouvée pour l'étudiant {etudiant_nom} {etudiant_prenom}."
                     logger.warning(f"Aucune note trouvée pour {etudiant_prenom} {etudiant_nom}")
             elif len(results) == 0:
                 cursor.close()
@@ -241,21 +238,21 @@ def handle_requests(client_socket, address):
                     if moyennes:
                         moyenne_promo = sum(moyennes) / len(moyennes)
                         response['status'] = 'success'
-                        response['average'] = moyenne_promo
+                        response['message'] = f'La moyenne pour la promotion {promo_nom} est de {float(moyenne_promo)}'
                         logger.info(f"Le client {address} a calculé la moyenne de la promotion {promo_nom} : moyenne={moyenne_promo:.2f}")
                     else:
                         response['status'] = 'error'
-                        response['message'] = "Aucune note trouvée pour les étudiants de la promotion."
+                        response['message'] = f"Aucune note trouvée pour les étudiants de la promotion {promo_nom}."
                         logger.warning(f"Aucune note trouvée pour les étudiants de la promotion {promo_nom}")
                 else:
                     cursor.close()
                     response['status'] = 'error'
-                    response['message'] = "Aucun étudiant trouvé pour la promotion."
+                    response['message'] = f"Aucun étudiant trouvé dans la promotion {promo_nom}."
                     logger.warning(f"Aucun étudiant trouvé pour la promotion {promo_nom}")
             else:
                 cursor.close()
                 response['status'] = 'error'
-                response['message'] = "Promotion introuvable."
+                response['message'] = f"La promotion {promo_nom} n'existe pas."
                 logger.error(f"Le client {address} a tenté de calculer la moyenne d'une promotion introuvable : {promo_nom}")
 
         elif action == 'get_student_details':
@@ -276,14 +273,13 @@ def handle_requests(client_socket, address):
                 cursor.execute(sql_notes, (etudiant_id,))
                 notes = cursor.fetchall()
                 cursor.close()
-                etudiant['notes'] = notes
+                etudiant['message'] = f"[{etudiant}]: {list(notes)}"
                 response['status'] = 'success'
-                response['student'] = etudiant
                 logger.info(f"Le client {address} a récupéré les détails de {etudiant_prenom} {etudiant_nom}")
             elif len(results) == 0:
                 cursor.close()
                 response['status'] = 'error'
-                response['message'] = "Étudiant introuvable."
+                response['message'] = f"Étudiant introuvable {etudiant_prenom} {etudiant_nom}."
                 logger.error(f"Le client {address} a demandé les détails d'un étudiant introuvable : {etudiant_prenom} {etudiant_nom}")
             else:
                 cursor.close()
@@ -312,7 +308,7 @@ def handle_requests(client_socket, address):
 
                 if students:
                     response['status'] = 'success'
-                    response['students'] = students
+                    response['students'] = list(students)
                     logger.info(f"Le client {address} a listé les étudiants de la promotion {promo_nom} ({len(students)} étudiants)")
                 else:
                     response['status'] = 'error'
@@ -324,6 +320,11 @@ def handle_requests(client_socket, address):
                 response['message'] = "Promotion introuvable."
                 logger.error(f"Le client {address} a demandé une liste d'étudiants pour une promotion introuvable : {promo_nom}")
 
+        elif action == 'handshake':
+            response['status'] = 'success'
+            response['message'] = 'You connected to me'
+            logger.info(f"Le client {address} vient d'effectuer un test de connexion")
+        
         else:
             response['status'] = 'error'
             response['message'] = 'Action inconnue.'
