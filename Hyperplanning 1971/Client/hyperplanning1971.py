@@ -28,8 +28,7 @@ def create_promotion(nom):
         }
     }
     response = send_request(request)
-    print(response['message'])
-    return()
+    return response
 
 def handshake():
     request = {
